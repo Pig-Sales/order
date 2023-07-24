@@ -51,7 +51,7 @@
                     <fork>true</fork>
                     <addResources>true</addResources>
                     <!-- 指定该Main Class为全局的唯一入口 -->
-                    <mainClass>com.ps.UserApplication</mainClass>
+                    <mainClass>com.ps.OrderApplication</mainClass>
                 </configuration>
                 <executions>
                     <execution>
