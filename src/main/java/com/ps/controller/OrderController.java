@@ -41,16 +41,22 @@ public class OrderController {
     }
 
     @PostMapping("/order/createNewOrder")
-    public Result createNewOrder(@RequestBody Page page , @RequestHeader String Authorization){
+    public Result createNewOrder(@RequestHeader String Authorization, @RequestBody Order order){
         Claims claims = JwtUtils.parseJWT(Authorization,signKey);
-        return Result.success(orderService.createNewOrder());
+        String openId = (String) claims.get("openId");
+        orderService.createNewOrder(order);
+        return Result.success();
     }
     @PostMapping("/order/alterOrder")
     public Result alterOrder(@RequestBody Order order , @RequestHeader String Authorization){
         Claims claims = JwtUtils.parseJWT(Authorization,signKey);
         return Result.success(orderService.alterOrder());
     }
-
+    @PostMapping("/order/getButtonContent")
+    public Result getButtonContent(@RequestBody Button_Content button_content) {
+        String auth =  button_content.getUser_auth();
+        return Result.success(orderService.getButtonContent(auth));
+    }
     @PostMapping("/order/getTipContent")
     public Result getTipContent(@RequestBody Tip_Content tip_content) {
         String auth =  tip_content.getUser_auth();

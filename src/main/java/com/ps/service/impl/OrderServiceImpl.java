@@ -1,10 +1,7 @@
 package com.ps.service.impl;
 
 
-import com.ps.pojo.Goods;
-import com.ps.pojo.Order;
-import com.ps.pojo.Tip_Content;
-import com.ps.pojo.User;
+import com.ps.pojo.*;
 import com.ps.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -41,8 +38,9 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order createNewOrder() {
-        return null;
+    public void createNewOrder(Order order) {
+
+        mongoTemplate.save(order,"order");
     }
 
     @Override
@@ -54,5 +52,9 @@ public class OrderServiceImpl implements OrderService {
     public List<Tip_Content> getTipContent(String auth) {
         Query query = new Query(Criteria.where("user_auth").is(auth));
         return mongoTemplate.find(query, Tip_Content.class, "tip_content");
+    }
+    public List<Button_Content> getButtonContent(String auth) {
+        Query query = new Query(Criteria.where("user_auth").is(auth));
+        return mongoTemplate.find(query, Button_Content.class, "button_content");
     }
 }
