@@ -53,13 +53,15 @@ public class OrderController {
         return Result.success(orderService.alterOrder());
     }
     @PostMapping("/order/getButtonContent")
-    public Result getButtonContent(@RequestBody Button_Content button_content) {
-        String auth =  button_content.getUser_auth();
+    public Result getButtonContent(@RequestHeader String Authorization) {
+        Claims claims = JwtUtils.parseJWT(Authorization, signKey);
+        String auth = (String) claims.get("user_auth");
         return Result.success(orderService.getButtonContent(auth));
     }
     @PostMapping("/order/getTipContent")
-    public Result getTipContent(@RequestBody Tip_Content tip_content) {
-        String auth =  tip_content.getUser_auth();
+    public Result getTipContent(@RequestHeader String Authorization) {
+        Claims claims = JwtUtils.parseJWT(Authorization, signKey);
+        String auth = (String) claims.get("user_auth");
         return Result.success(orderService.getTipContent(auth));
     }
 
