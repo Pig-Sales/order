@@ -16,13 +16,12 @@ public class OrderController {
     @Value("${jwt.signKey}")
     private String signKey;
 
-    @PostMapping("/order/getOrderById")
-    public Result getOrderById(@RequestBody Order order_id,@RequestHeader String Authorization){
-
-        Claims claims = JwtUtils.parseJWT(Authorization,signKey);
-        String openId = (String) claims.get("openId");
-        return Result.success();
-    }
+//    @PostMapping("/order/getOrderById")
+//    public Result getOrderById(@RequestBody Order order_id,@RequestHeader String Authorization){
+//        Claims claims = JwtUtils.parseJWT(Authorization,signKey);
+//        String openId = (String) claims.get("openId");
+//        return Result.success(getOrderById(order.getOrder_id())));
+//    }
 
     @PostMapping("/order/getOrderByConditions")
     public Result getOrderByConditions(@RequestBody Order order, @RequestHeader String Authorization){
