@@ -8,11 +8,10 @@ import com.ps.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
-
-
 @RestController
 public class OrderController {
     @Autowired
+
     public OrderService orderService;
     @Value("${jwt.signKey}")
     private String signKey;
@@ -29,7 +28,6 @@ public class OrderController {
     public Result getOrderByConditions(@RequestBody Order order, @RequestHeader String Authorization){
         Claims claims = JwtUtils.parseJWT(Authorization,signKey);
         String openId = (String) claims.get("openId");
-        String user_auth = (String) claims.get("user_auth");
         return Result.success();
     }
 
