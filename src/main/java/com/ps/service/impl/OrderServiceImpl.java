@@ -22,6 +22,11 @@ public class OrderServiceImpl implements OrderService {
     private MongoTemplate mongoTemplate;
 
 
+//    @Override
+//    public Order getOrderById(String order_id) {
+//        return null;
+//    }
+
     @Override
     public Order getOrderById(String order_id) {
         return null;
@@ -33,13 +38,17 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public Order getorderById(String goodsId) {
+        return null;
+    }
+
+    @Override
     public Order howManyAppeal(String openId) {
         return null;
     }
 
     @Override
     public void createNewOrder(Order order) {
-
         mongoTemplate.save(order,"order");
     }
 
