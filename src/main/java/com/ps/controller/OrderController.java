@@ -17,10 +17,9 @@ public class OrderController {
     private String signKey;
 
     @PostMapping("/order/getOrderById")
-    public Result getOrderById(@RequestBody Order order_id,@RequestHeader String Authorization){
+    public Result getOrderById(@RequestBody Order order,@RequestHeader String Authorization){
         Claims claims = JwtUtils.parseJWT(Authorization,signKey);
-        String openId = (String) claims.get("openId");
-        return Result.success();
+        return Result.success(orderService.getOrderById(order.getOrder_id()));
     }
 
     @PostMapping("/order/getOrderByConditions")
@@ -42,10 +41,12 @@ public class OrderController {
         orderService.createNewOrder(order);
         return Result.success();
     }
+
     @PostMapping("/order/alterOrder")
     public Result alterOrder(@RequestBody Order order , @RequestHeader String Authorization){
         Claims claims = JwtUtils.parseJWT(Authorization,signKey);
-        return Result.success(orderService.alterOrder());
+        orderService.updateOldOrder(order);
+        return Result.success();
     }
     @PostMapping("/order/getButtonContent")
     public Result getButtonContent(@RequestHeader String Authorization) {

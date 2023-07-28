@@ -1,18 +1,19 @@
 package com.ps.service;
 
 import com.ps.pojo.*;
-
+import com.ps.pojo.Order;
 import java.util.List;
 
 public interface OrderService {
 
-    Order getOrderById(String order_id);
 
     void getOrderByConditions(User username, Goods goods_name, Goods state);
-    Order getorderById(String goodsId);
+    Order getOrderById(String orderId);
     Order howManyAppeal(String openId);
 
     void createNewOrder(Order order);
+
+    void updateOldOrder(Order order);
 
     Order alterOrder();
 
