@@ -8,6 +8,10 @@ import com.ps.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 public class OrderController {
     @Autowired
@@ -23,7 +27,7 @@ public class OrderController {
     }
 
     @PostMapping("/order/getOrderByConditions")
-    public Result getOrderByConditions(@RequestBody Order order, @RequestHeader String Authorization){
+    public Result getOrderByConditions(@RequestBody GetOrderByConditions getOrderByConditions, @RequestHeader String Authorization){
         Claims claims = JwtUtils.parseJWT(Authorization,signKey);
         String openId = (String) claims.get("openId");
         return Result.success();
@@ -33,12 +37,21 @@ public class OrderController {
     public Result howManyAppeal(@RequestHeader String Authorization){
         Claims claims = JwtUtils.parseJWT(Authorization,signKey);
         String openId = (String) claims.get("openId");
-        return Result.success(orderService.howManyAppeal(openId));
+        Map map = new HashMap<>();
+        map.put("number",orderService.howManyAppeal(openId));
+        return Result.success(map);
     }
     @PostMapping("/order/createNewOrder")
     public Result createNewOrder(@RequestHeader String Authorization, @RequestBody Order order){
         Claims claims = JwtUtils.parseJWT(Authorization,signKey);
-        orderService.createNewOrder(order);
+        String auth = (String) claims.get("user_auth");
+        if( !"buyer".equals(auth)){
+            System.out.println("buyer".equals(auth));
+            return Result.error("没有创建订单权限");
+        }
+        else{
+            orderService.createNewOrder(order);
+        }
         return Result.success();
     }
 

@@ -5,17 +5,18 @@ import com.ps.pojo.*;
 import com.ps.service.OrderService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.Field;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
 @Service
 public class OrderServiceImpl implements OrderService {
 
@@ -23,15 +24,11 @@ public class OrderServiceImpl implements OrderService {
     private MongoTemplate mongoTemplate;
 
 
-//    @Override
-//    public Order getOrderById(String order_id) {
-//        return null;
-//    }
-
     @Override
     public Order getOrderById(String orderId) {
         Query query = new Query(Criteria.where("order_id").is(orderId));
         return mongoTemplate.findOne(query, Order.class, "order");
+
     }
 
     @Override
@@ -39,8 +36,9 @@ public class OrderServiceImpl implements OrderService {
 
     }
     @Override
-    public Order howManyAppeal(String openId) {
-        return null;
+    public long howManyAppeal(String openId) {
+        Query query = new Query(Criteria.where("state").is("申诉中"));
+        return mongoTemplate.count(query, Order.class);
     }
 
     @Override
@@ -102,9 +100,33 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order alterOrder() {
+    public List<Order> getOrderByConditions(GetOrderByConditions getOrderByConditions) {
+        Sort sort = null;
+        if(getOrderByConditions.getUsername()!=null){
+            sort = Sort.by(Sort.Order.desc(getOrderByConditions.getUsername()));
+        }
+        else if(getOrderByConditions.getGoods_name()!=null) {
+            sort = Sort.by(Sort.Order.desc(getOrderByConditions.getGoods_name()));
+        }
+       if(getOrderByConditions.getState()!=null) {
+            sort = Sort.by(Sort.Order.asc(getOrderByConditions.getState()));
+        }
 
-        return null;
+        Pageable pageable;
+        if (sort != null) {
+            pageable = PageRequest.of(getOrderByConditions.getPage_num()-1, getOrderByConditions.getPage_size(),sort);
+        }
+        else {
+            pageable = PageRequest.of(getOrderByConditions.getPage_num()-1, getOrderByConditions.getPage_size());
+        }
+        Criteria criteria = new Criteria().orOperator(
+                Criteria.where("username").regex(getOrderByConditions.getUsername()),
+                Criteria.where("goods_name").regex(getOrderByConditions.getGoods_name()),
+                Criteria.where("state").regex(getOrderByConditions.getState())
+        );
+        Query query = Query.query(criteria).with(pageable);
+        return mongoTemplate.find(query, Order.class,"order");
+
     }
 
     @Override
