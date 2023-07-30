@@ -1,13 +1,15 @@
 package com.ps.service.impl;
 
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ps.client.UserClient;
 import com.ps.pojo.*;
 import com.ps.service.OrderService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -15,6 +17,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -22,17 +25,13 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private MongoTemplate mongoTemplate;
-
+    @Autowired
+    private UserClient userClient;
 
     @Override
     public Order getOrderById(String orderId) {
         Query query = new Query(Criteria.where("order_id").is(orderId));
         return mongoTemplate.findOne(query, Order.class, "order");
-
-    }
-
-    @Override
-    public void getOrderByConditions(User username, Goods goods_name, Goods state) {
 
     }
     @Override
@@ -44,8 +43,10 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order createNewOrder(Order order) {
         order.setOrder_id((new ObjectId()).toString());
+        order.setState("待询价");
         order.setCreate_time(LocalDateTime.now().toString());
         order.setUpdate_time(LocalDateTime.now().toString());
+        mongoTemplate.save(order,"order");
         return mongoTemplate.save(order,"order");
     }
 
@@ -54,7 +55,7 @@ public class OrderServiceImpl implements OrderService {
         order.setUpdate_time(LocalDateTime.now().toString());
         Query query = Query.query(Criteria.where("order_id").is(order.getOrder_id()));
         Update update=new Update();
-        if(order.getState()!=null){
+        if(order.getState()==null){
             update.set("state",order.getState());
         }
         if(order.getOrder_number()!=null){
@@ -101,29 +102,53 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<Order> getOrderByConditions(GetOrderByConditions getOrderByConditions) {
-        Sort sort = null;
-        if(getOrderByConditions.getUsername()!=null){
-            sort = Sort.by(Sort.Order.desc(getOrderByConditions.getUsername()));
-        }
-        else if(getOrderByConditions.getGoods_name()!=null) {
-            sort = Sort.by(Sort.Order.desc(getOrderByConditions.getGoods_name()));
-        }
-       if(getOrderByConditions.getState()!=null) {
-            sort = Sort.by(Sort.Order.asc(getOrderByConditions.getState()));
-        }
 
         Pageable pageable;
-        if (sort != null) {
-            pageable = PageRequest.of(getOrderByConditions.getPage_num()-1, getOrderByConditions.getPage_size(),sort);
+        pageable = PageRequest.of(getOrderByConditions.getPage_num()-1, getOrderByConditions.getPage_size());
+        //and or 查询
+        Criteria criteria = new Criteria();
+        if (getOrderByConditions.getInput_condition()!= null) {
+            if(getOrderByConditions.getState() != null){
+                List<String> list = new ArrayList<>();
+                List<User> userList = new ObjectMapper().convertValue(
+                        userClient.getUseridByName(getOrderByConditions.getInput_condition()).getData(),
+                        new TypeReference<List<User>>() {
+                        }
+                );
+                userList.forEach(user -> list.add(user.getUser_id()));
+                criteria = new Criteria().andOperator(
+                        Criteria.where("state").is(getOrderByConditions.getState()),
+                        new Criteria().orOperator(
+                                Criteria.where("seller_id").in(list),
+                                Criteria.where("buyer_id").in(list),
+                                Criteria.where("goods_name").regex(getOrderByConditions.getInput_condition())
+                        )
+                );
+            }
+            else{
+                List<String> list = new ArrayList<>();
+                List<User> userList = new ObjectMapper().convertValue(
+                        userClient.getUseridByName(getOrderByConditions.getInput_condition()).getData(),
+                        new TypeReference<List<User>>() {
+                        }
+                );
+                userList.forEach(user -> list.add(user.getUser_id()));
+                criteria = new Criteria().orOperator(
+                                Criteria.where("seller_id").in(list),
+                                Criteria.where("buyer_id").in(list),
+                                Criteria.where("goods_name").regex(getOrderByConditions.getInput_condition())
+                );
+            }
         }
         else {
-            pageable = PageRequest.of(getOrderByConditions.getPage_num()-1, getOrderByConditions.getPage_size());
+            if(getOrderByConditions.getState() != null){
+                criteria = new Criteria().where("state").is(getOrderByConditions.getState());
+            }
+            else{
+                Query query = new Query().with(pageable);
+                return mongoTemplate.find(query, Order.class,"order");
+            }
         }
-        Criteria criteria = new Criteria().orOperator(
-                Criteria.where("username").regex(getOrderByConditions.getUsername()),
-                Criteria.where("goods_name").regex(getOrderByConditions.getGoods_name()),
-                Criteria.where("state").regex(getOrderByConditions.getState())
-        );
         Query query = Query.query(criteria).with(pageable);
         return mongoTemplate.find(query, Order.class,"order");
 

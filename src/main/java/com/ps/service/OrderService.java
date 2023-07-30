@@ -7,7 +7,6 @@ import java.util.List;
 public interface OrderService {
 
 
-    void getOrderByConditions(User username, Goods goods_name, Goods state);
     Order getOrderById(String orderId);
     long howManyAppeal(String openId);
     Order createNewOrder(Order order);

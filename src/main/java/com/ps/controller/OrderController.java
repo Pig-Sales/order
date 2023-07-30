@@ -22,15 +22,13 @@ public class OrderController {
 
     @PostMapping("/order/getOrderById")
     public Result getOrderById(@RequestBody Order order,@RequestHeader String Authorization){
-        Claims claims = JwtUtils.parseJWT(Authorization,signKey);
         return Result.success(orderService.getOrderById(order.getOrder_id()));
     }
 
     @PostMapping("/order/getOrderByConditions")
     public Result getOrderByConditions(@RequestBody GetOrderByConditions getOrderByConditions, @RequestHeader String Authorization){
         Claims claims = JwtUtils.parseJWT(Authorization,signKey);
-        String openId = (String) claims.get("openId");
-        return Result.success();
+        return Result.success(orderService.getOrderByConditions(getOrderByConditions));
     }
 
     @PostMapping("/order/howManyAppeal")
@@ -50,6 +48,7 @@ public class OrderController {
             return Result.error("没有创建订单权限");
         }
         else{
+            orderService.createNewOrder(order);
             return Result.success(orderService.createNewOrder(order));
         }
     }
