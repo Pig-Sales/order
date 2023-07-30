@@ -50,9 +50,8 @@ public class OrderController {
             return Result.error("没有创建订单权限");
         }
         else{
-            orderService.createNewOrder(order);
+            return Result.success(orderService.createNewOrder(order));
         }
-        return Result.success();
     }
 
     @PostMapping("/order/alterOrder")

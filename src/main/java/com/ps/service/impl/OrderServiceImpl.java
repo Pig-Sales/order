@@ -42,11 +42,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void createNewOrder(Order order) {
+    public Order createNewOrder(Order order) {
         order.setOrder_id((new ObjectId()).toString());
         order.setCreate_time(LocalDateTime.now().toString());
         order.setUpdate_time(LocalDateTime.now().toString());
-        mongoTemplate.save(order,"order");
+        return mongoTemplate.save(order,"order");
     }
 
     @Override

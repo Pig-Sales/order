@@ -10,7 +10,7 @@ public interface OrderService {
     void getOrderByConditions(User username, Goods goods_name, Goods state);
     Order getOrderById(String orderId);
     long howManyAppeal(String openId);
-    void createNewOrder(Order order);
+    Order createNewOrder(Order order);
     void updateOldOrder(Order order);
     List<Order> getOrderByConditions(GetOrderByConditions getOrderByConditions);
     List<Tip_Content> getTipContent(String auth);
