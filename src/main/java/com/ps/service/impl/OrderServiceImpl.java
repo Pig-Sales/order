@@ -4,8 +4,11 @@ package com.ps.service.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ps.client.UserClient;
+import com.ps.client.GoodsClient;
 import com.ps.pojo.*;
 import com.ps.service.OrderService;
+import com.sun.net.httpserver.Authenticator;
+import io.jsonwebtoken.Claims;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -17,8 +20,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -27,6 +29,8 @@ public class OrderServiceImpl implements OrderService {
     private MongoTemplate mongoTemplate;
     @Autowired
     private UserClient userClient;
+    @Autowired
+    private  GoodsClient goodsClient;
 
     @Override
     public Order getOrderById(String orderId) {
@@ -44,6 +48,9 @@ public class OrderServiceImpl implements OrderService {
     public Order createNewOrder(Order order) {
         order.setOrder_id((new ObjectId()).toString());
         order.setState("待询价");
+        order.setBuyer_confirm(0);
+        order.setSeller_confirm(0);
+        order.setQuarantine_state("未检疫");
         order.setCreate_time(LocalDateTime.now().toString());
         order.setUpdate_time(LocalDateTime.now().toString());
         mongoTemplate.save(order,"order");
@@ -51,15 +58,51 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void updateOldOrder(Order order) {
+    public Order updateOldOrder(Order order, Claims claims) {
         order.setUpdate_time(LocalDateTime.now().toString());
         Query query = Query.query(Criteria.where("order_id").is(order.getOrder_id()));
         Update update=new Update();
-        if(order.getState()==null){
-            update.set("state",order.getState());
+        if(order.getState()!=null){
+            List<String> order_states1 = Arrays.asList("待询价", "待预付", "待交易", "已完成");
+            List<String> order_states2 = Arrays.asList("待询价", "待预付", "已取消");
+            List<String> order_states3 = Arrays.asList("待询价", "待预付", "待交易", "申诉中", "已取消");
+            List<String> order_states4 = Arrays.asList("待询价", "已取消");
+            Order order1 = mongoTemplate.findOne(query, Order.class, "order");
+            assert order1 != null;
+            if(!Objects.equals(order.getState(), "待询价")) {
+                if (!(order_states1.indexOf(order.getState()) != order_states1.indexOf(order1.getState()) + 1 &&
+                        order_states2.indexOf(order.getState()) != order_states2.indexOf(order1.getState()) + 1 &&
+                        order_states3.indexOf(order.getState()) != order_states3.indexOf(order1.getState()) + 1 &&
+                        order_states4.indexOf(order.getState()) != order_states4.indexOf(order1.getState()) + 1)
+
+                ){
+                    if(!Objects.equals(order.getState(), "已完成")){
+                        if(Objects.equals(order.getState(), "待交易")){
+                            update.set("deposit_time",LocalDateTime.now());
+                        }
+                        update.set("state", order.getState());
+                    }
+                    else {
+                        if(order1.getBuyer_confirm()==1&&order1.getSeller_confirm()==1){
+                            update.set("state", order.getState());
+                            update.set("complete_time",LocalDateTime.now());
+                        }
+                        else {
+                            if(Objects.equals((String) claims.get("user_auth"), "buyer")){
+                                update.set("buyer_confirm",1);
+                            }
+                            else {
+                                update.set("seller_confirm",1);
+                            }
+                        }
+                    }
+                }
+            }
         }
+
         if(order.getOrder_number()!=null){
-            update.set("order_number",order.getOrder_number());
+            Order order1 = mongoTemplate.findOne(query, Order.class, "order");
+
         }
         if(order.getOrder_price()!=null) {
             update.set("order_price",order.getOrder_price());
@@ -98,6 +141,8 @@ public class OrderServiceImpl implements OrderService {
 
         update.set("update_time",order.getUpdate_time());
         mongoTemplate.updateFirst(query,update,"order");
+
+        return order;
     }
 
     @Override

@@ -56,8 +56,7 @@ public class OrderController {
     @PostMapping("/order/alterOrder")
     public Result alterOrder(@RequestBody Order order , @RequestHeader String Authorization){
         Claims claims = JwtUtils.parseJWT(Authorization,signKey);
-        orderService.updateOldOrder(order);
-        return Result.success();
+        return Result.success(orderService.updateOldOrder(order,claims));
     }
     @PostMapping("/order/getButtonContent")
     public Result getButtonContent(@RequestHeader String Authorization) {
