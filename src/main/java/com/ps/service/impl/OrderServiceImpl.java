@@ -51,17 +51,25 @@ public class OrderServiceImpl implements OrderService {
         order.setBuyer_confirm(0);
         order.setSeller_confirm(0);
         order.setQuarantine_state("未检疫");
+        order.setOrder_number(0);
+        order.setActual_weight(null);
+        order.setActual_total_price(null);
         order.setCreate_time(LocalDateTime.now().toString());
         order.setUpdate_time(LocalDateTime.now().toString());
-        mongoTemplate.save(order,"order");
         return mongoTemplate.save(order,"order");
     }
 
     @Override
     public Order updateOldOrder(Order order, Claims claims) {
-        order.setUpdate_time(LocalDateTime.now().toString());
+        System.out.println(order.getOrder_number());
+        System.out.println(order.getOrder_price());
+//        order.setQuarantine_state(order.getQuarantine_state());
+//        order.setQuarantine_ask_time(order.getQuarantine_ask_time());
+//        order.setQuarantine_complete_time(order.getQuarantine_complete_time());
         Query query = Query.query(Criteria.where("order_id").is(order.getOrder_id()));
         Update update=new Update();
+        order.setActual_total_price(order.getActual_total_price());
+        order.setActual_weight(order.getActual_weight());
         if(order.getState()!=null){
             List<String> order_states1 = Arrays.asList("待询价", "待预付", "待交易", "已完成");
             List<String> order_states2 = Arrays.asList("待询价", "待预付", "已取消");
@@ -79,6 +87,12 @@ public class OrderServiceImpl implements OrderService {
                     if(!Objects.equals(order.getState(), "已完成")){
                         if(Objects.equals(order.getState(), "待交易")){
                             update.set("deposit_time",LocalDateTime.now());
+                            order.setDeposit_time(LocalDateTime.now().toString());
+                            Order order2 = mongoTemplate.findOne(query, Order.class, "order");
+                            Goods goods = new Goods() ;
+                            goods.setGoods_id(order2.getGoods_id());
+                            goods.setGoods_number(-order2.getOrder_number());
+                            goodsClient.updateGoodsNumber(goods);
                         }
                         update.set("state", order.getState());
                     }
@@ -99,53 +113,23 @@ public class OrderServiceImpl implements OrderService {
                 }
             }
         }
-        if(order.getOrder_number()!=null){
+
+        if(Objects.equals(order.getState(), "已取消")){
             Order order1 = mongoTemplate.findOne(query, Order.class, "order");
             Goods goods = new Goods() ;
-            goods.setGoods_id(order1.getGoods_id());
-            goods.setGoods_number(-order1.getOrder_number());
-            goodsClient.updateGoodsNumber(goods);
-            if(Objects.equals(order.getState(), "已取消")){
                 goods.setGoods_id(order1.getGoods_id());
                 goods.setGoods_number(order1.getOrder_number());
                 goodsClient.updateGoodsNumber(goods);
             }
-        }
-        if(order.getOrder_price()!=null) {
-            update.set("order_price",order.getOrder_price());
-        }
-        if(order.getDeposit_time()!=null){
-            update.set("deposit_time",order.getDeposit_time());
-        }
-        if(order.getComplete_time()!=null){
-            update.set("complete_time",order.getComplete_time());
-        }
-        if(order.getQuarantine_state()!=null){
-            update.set("quarantine_state",order.getQuarantine_state());
-        }
-        if(order.getActual_weight()!=null){
-            update.set("actual_weight",order.getActual_weight());
-        }
-        if(order.getActual_total_price()!=null){
-            update.set("actual_total_price",order.getActual_total_price());
-        }
-        if(order.getQuarantine_image()!=null) {
-            update.set("buyer_id",order.getBuyer_id());
-        }
-        if(order.getQuarantine_ask_time()!=null) {
-            update.set("quarantine_ask_time",order.getQuarantine_ask_time());
-        }
-        if(order.getQuarantine_complete_time()!=null) {
-            update.set("quarantine_complete_time",order.getQuarantine_complete_time());
-        }
         if(order.getGoods_belong()!=null) {
-            update.set("goods_belong",order.getGoods_belong());
+            order.setGoods_belong(order.getGoods_belong());
         }
 
         if(order.getDeposit_belong()!=null) {
-            update.set("deposite_belong",order.getDeposit_belong());
+            order.setDeposit_belong(order.getDeposit_belong());
         }
-
+        update.set("order_number",order.getOrder_number());
+        update.set("order_price",order.getOrder_price());
         update.set("update_time",order.getUpdate_time());
         mongoTemplate.updateFirst(query,update,"order");
 
@@ -154,19 +138,21 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<Order> getOrderByConditions(GetOrderByConditions getOrderByConditions) {
-
         Pageable pageable;
         pageable = PageRequest.of(getOrderByConditions.getPage_num()-1, getOrderByConditions.getPage_size());
         //and or 查询
         Criteria criteria = new Criteria();
         if (getOrderByConditions.getInput_condition()!= null) {
             if(getOrderByConditions.getState() != null){
-                List<String> list = new ArrayList<>();
-                List<User> userList = new ObjectMapper().convertValue(
-                        userClient.getUseridByName(getOrderByConditions.getInput_condition()).getData(),
-                        new TypeReference<List<User>>() {
-                        }
+                List<String> list= new ArrayList<>();
+                User user1 = new User();
+                user1.setUsername(getOrderByConditions.getInput_condition());
+                List<User> userList =new ObjectMapper().convertValue(
+                        userClient.getUseridByName(user1).getData(),
+                        new TypeReference<List<User>>(){}
                 );
+                System.out.println(getOrderByConditions.getInput_condition());
+               System.out.println(userList);
                 userList.forEach(user -> list.add(user.getUser_id()));
                 criteria = new Criteria().andOperator(
                         Criteria.where("state").is(getOrderByConditions.getState()),
@@ -178,11 +164,12 @@ public class OrderServiceImpl implements OrderService {
                 );
             }
             else{
-                List<String> list = new ArrayList<>();
-                List<User> userList = new ObjectMapper().convertValue(
-                        userClient.getUseridByName(getOrderByConditions.getInput_condition()).getData(),
-                        new TypeReference<List<User>>() {
-                        }
+                List<String> list= new ArrayList<>();
+                User user1 = new User();
+                user1.setUsername(getOrderByConditions.getInput_condition());
+                List<User> userList =new ObjectMapper().convertValue(
+                        userClient.getUseridByName(user1).getData(),
+                        new TypeReference<List<User>>(){}
                 );
                 userList.forEach(user -> list.add(user.getUser_id()));
                 criteria = new Criteria().orOperator(
