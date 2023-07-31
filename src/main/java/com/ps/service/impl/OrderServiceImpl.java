@@ -99,10 +99,17 @@ public class OrderServiceImpl implements OrderService {
                 }
             }
         }
-
         if(order.getOrder_number()!=null){
             Order order1 = mongoTemplate.findOne(query, Order.class, "order");
-
+            Goods goods = new Goods() ;
+            goods.setGoods_id(order1.getGoods_id());
+            goods.setGoods_number(-order1.getOrder_number());
+            goodsClient.updateGoodsNumber(goods);
+            if(Objects.equals(order.getState(), "已取消")){
+                goods.setGoods_id(order1.getGoods_id());
+                goods.setGoods_number(order1.getOrder_number());
+                goodsClient.updateGoodsNumber(goods);
+            }
         }
         if(order.getOrder_price()!=null) {
             update.set("order_price",order.getOrder_price());
