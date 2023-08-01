@@ -63,8 +63,8 @@ public class OrderServiceImpl implements OrderService {
         order.setOrder_number(0);
         order.setActual_weight(null);
         order.setActual_total_price(null);
-        order.setCreate_time(formatTime1+"-"+formatTime2);
-        order.setUpdate_time(formatTime1+"-"+formatTime2);
+        order.setCreate_time(formatTime1+" "+formatTime2);
+        order.setUpdate_time(formatTime1+" "+formatTime2);
         return mongoTemplate.save(order,"order");
     }
 
@@ -121,7 +121,7 @@ public class OrderServiceImpl implements OrderService {
                             goodsClient.updateGoodsNumber(goods);
                         }
                         if(Objects.equals(order.getState(), "待交易")){
-                            update.set("deposite_time",formatTime1+"-"+formatTime2);
+                            update.set("deposite_time",formatTime1+" "+formatTime2);
                         }
                         update.set("state", order.getState());
                         System.out.println( order.getState());
@@ -129,7 +129,7 @@ public class OrderServiceImpl implements OrderService {
                     else {
                         if(order1.getBuyer_confirm()==1&&order1.getSeller_confirm()==1){
                             update.set("state", order.getState());
-                            update.set("complete_time",formatTime1+"-"+formatTime2);
+                            update.set("complete_time",formatTime1+" "+formatTime2);
                         }
                         else {
                             if(Objects.equals((String) claims.get("user_auth"), "buyer")){
