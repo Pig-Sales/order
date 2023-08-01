@@ -121,7 +121,7 @@ public class OrderServiceImpl implements OrderService {
                             goodsClient.updateGoodsNumber(goods);
                         }
                         if(Objects.equals(order.getState(), "待交易")){
-                            update.set("deposite_time",formatTime1+" "+formatTime2);
+                            update.set("deposit_time",formatTime1+" "+formatTime2);
                         }
                         update.set("state", order.getState());
                         System.out.println( order.getState());
