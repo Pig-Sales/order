@@ -19,7 +19,10 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -46,6 +49,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Order createNewOrder(Order order) {
+        LocalDate date = LocalDate.now();
+        LocalTime time = LocalTime.now();
+        DateTimeFormatter dateFormatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter timeFormatter2 = DateTimeFormatter.ofPattern("HH时mm分ss秒");
+        String formatTime1 = dateFormatter1.format(date);
+        String formatTime2 = timeFormatter2.format(time);
         order.setOrder_id((new ObjectId()).toString());
         order.setState("待询价");
         order.setBuyer_confirm(0);
@@ -54,13 +63,19 @@ public class OrderServiceImpl implements OrderService {
         order.setOrder_number(0);
         order.setActual_weight(null);
         order.setActual_total_price(null);
-        order.setCreate_time(LocalDateTime.now().toString());
-        order.setUpdate_time(LocalDateTime.now().toString());
+        order.setCreate_time(formatTime1+"-"+formatTime2);
+        order.setUpdate_time(formatTime1+"-"+formatTime2);
         return mongoTemplate.save(order,"order");
     }
 
     @Override
     public Order updateOldOrder(Order order, Claims claims) {
+        LocalDate date = LocalDate.now();
+        LocalTime time = LocalTime.now();
+        DateTimeFormatter dateFormatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter timeFormatter2 = DateTimeFormatter.ofPattern("HH时mm分ss秒");
+        String formatTime1 = dateFormatter1.format(date);
+        String formatTime2 = timeFormatter2.format(time);
         System.out.println(order.getOrder_number());
         System.out.println(order.getOrder_price());
 //        order.setQuarantine_state(order.getQuarantine_state());
@@ -106,7 +121,7 @@ public class OrderServiceImpl implements OrderService {
                             goodsClient.updateGoodsNumber(goods);
                         }
                         if(Objects.equals(order.getState(), "待交易")){
-                            update.set("deposite_time",LocalDateTime.now());
+                            update.set("deposite_time",formatTime1+"-"+formatTime2);
                         }
                         update.set("state", order.getState());
                         System.out.println( order.getState());
@@ -114,7 +129,7 @@ public class OrderServiceImpl implements OrderService {
                     else {
                         if(order1.getBuyer_confirm()==1&&order1.getSeller_confirm()==1){
                             update.set("state", order.getState());
-                            update.set("complete_time",LocalDateTime.now());
+                            update.set("complete_time",formatTime1+"-"+formatTime2);
                         }
                         else {
                             if(Objects.equals((String) claims.get("user_auth"), "buyer")){
