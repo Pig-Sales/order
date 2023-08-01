@@ -68,8 +68,18 @@ public class OrderServiceImpl implements OrderService {
 //        order.setQuarantine_complete_time(order.getQuarantine_complete_time());
         Query query = Query.query(Criteria.where("order_id").is(order.getOrder_id()));
         Update update=new Update();
-        order.setActual_total_price(order.getActual_total_price());
-        order.setActual_weight(order.getActual_weight());
+        if(order.getActual_weight() != null){
+            if(order.getOrder_price() != null){
+                update.set("actual_weight",order.getActual_weight());
+                update.set("order_price",order.getOrder_price());
+                update.set("actual_total_price",order.getActual_weight()*order.getOrder_price());
+            }
+            else{
+                Order order1 = mongoTemplate.findOne(query, Order.class, "order");
+                update.set("actual_weight",order.getActual_weight());
+                update.set("actual_total_price",order.getActual_weight()*order1.getOrder_price());
+            }
+        }
         if(order.getState()!=null){
             List<String> order_states1 = Arrays.asList("待询价", "待预付", "待交易", "已完成");
             List<String> order_states2 = Arrays.asList("待询价", "待预付", "已取消");
@@ -85,16 +95,21 @@ public class OrderServiceImpl implements OrderService {
 
                 ){
                     if(!Objects.equals(order.getState(), "已完成")){
-                        if(Objects.equals(order.getState(), "待交易")){
-                            update.set("deposit_time",LocalDateTime.now());
-                            order.setDeposit_time(LocalDateTime.now().toString());
+                        if(Objects.equals(order.getState(), "待预付")){
+                            System.out.println(order.getOrder_number());
                             Order order2 = mongoTemplate.findOne(query, Order.class, "order");
+                            update.set("order_number",order.getOrder_number());
+                            update.set("order_price",order.getOrder_price());
                             Goods goods = new Goods() ;
                             goods.setGoods_id(order2.getGoods_id());
-                            goods.setGoods_number(-order2.getOrder_number());
+                            goods.setGoods_number(-order.getOrder_number());
                             goodsClient.updateGoodsNumber(goods);
                         }
+                        if(Objects.equals(order.getState(), "待交易")){
+                            update.set("deposite_time",LocalDateTime.now());
+                        }
                         update.set("state", order.getState());
+                        System.out.println( order.getState());
                     }
                     else {
                         if(order1.getBuyer_confirm()==1&&order1.getSeller_confirm()==1){
@@ -112,14 +127,17 @@ public class OrderServiceImpl implements OrderService {
                     }
                 }
             }
+
         }
 
         if(Objects.equals(order.getState(), "已取消")){
             Order order1 = mongoTemplate.findOne(query, Order.class, "order");
             Goods goods = new Goods() ;
-                goods.setGoods_id(order1.getGoods_id());
-                goods.setGoods_number(order1.getOrder_number());
-                goodsClient.updateGoodsNumber(goods);
+            update.set("order_number",order.getOrder_number());
+            update.set("order_price",order.getOrder_price());
+            goods.setGoods_id(order1.getGoods_id());
+            goods.setGoods_number(order1.getOrder_number());
+            goodsClient.updateGoodsNumber(goods);
             }
         if(order.getGoods_belong()!=null) {
             order.setGoods_belong(order.getGoods_belong());
@@ -128,8 +146,6 @@ public class OrderServiceImpl implements OrderService {
         if(order.getDeposit_belong()!=null) {
             order.setDeposit_belong(order.getDeposit_belong());
         }
-        update.set("order_number",order.getOrder_number());
-        update.set("order_price",order.getOrder_price());
         update.set("update_time",order.getUpdate_time());
         mongoTemplate.updateFirst(query,update,"order");
 
