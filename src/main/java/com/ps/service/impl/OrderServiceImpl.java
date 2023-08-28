@@ -48,7 +48,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order createNewOrder(Order order) {
+    public Order createNewOrder(Order order) {  //买方求购即为创建订单
         LocalDate date = LocalDate.now();
         LocalTime time = LocalTime.now();
         DateTimeFormatter dateFormatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -58,7 +58,7 @@ public class OrderServiceImpl implements OrderService {
         order.setOrder_id((new ObjectId()).toString());
         order.setState("待询价");
         order.setBuyer_confirm(0);
-        order.setSeller_confirm(0);
+        //order.setSeller_confirm(0);
         order.setQuarantine_state("未检疫");
         order.setOrder_number(0);
         order.setActual_weight(null);
@@ -127,22 +127,13 @@ public class OrderServiceImpl implements OrderService {
                         System.out.println( order.getState());
                     }
                     else {
-                        if(order1.getBuyer_confirm()==1&&order1.getSeller_confirm()==1){
+                        if(order1.getBuyer_confirm()==1){
                             update.set("state", order.getState());
                             update.set("complete_time",formatTime1+" "+formatTime2);
-                        }
-                        else {
-                            if(Objects.equals((String) claims.get("user_auth"), "buyer")){
-                                update.set("buyer_confirm",1);
-                            }
-                            else {
-                                update.set("seller_confirm",1);
-                            }
                         }
                     }
                 }
             }
-
         }
 
         if(Objects.equals(order.getState(), "已取消")){

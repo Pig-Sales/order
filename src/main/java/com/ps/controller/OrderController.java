@@ -5,6 +5,7 @@ import com.ps.pojo.*;
 import com.ps.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
 import com.ps.service.OrderService;
+import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -48,7 +49,7 @@ public class OrderController {
             return Result.error("没有创建订单权限");
         }
         else{
-            orderService.createNewOrder(order);
+            //orderService.createNewOrder(order);
             return Result.success(orderService.createNewOrder(order));
         }
     }
@@ -58,6 +59,18 @@ public class OrderController {
         Claims claims = JwtUtils.parseJWT(Authorization,signKey);
         return Result.success(orderService.updateOldOrder(order,claims));
     }
+
+//    @PostMapping("/order/updateOrderByPlatform")
+//    public Result updateOrderByPlatform(@RequestBody Order order , @RequestHeader String Authorization){
+//        Claims claims = JwtUtils.parseJWT(Authorization,signKey);
+//        String auth = (String) claims.get("user_auth");
+//        if (auth.equals("seller") || auth.equals("buyer")){
+//            System.out.println(auth);
+//            return Result.error("没有修改价格权限！");
+//        }
+//        return Result.success(orderService.updateOldOrder(order,claims));
+//    }
+
     @PostMapping("/order/getButtonContent")
     public Result getButtonContent(@RequestHeader String Authorization) {
         Claims claims = JwtUtils.parseJWT(Authorization, signKey);
