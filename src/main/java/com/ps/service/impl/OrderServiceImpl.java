@@ -38,14 +38,18 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order getOrderById(String orderId) {
         Query query = new Query(Criteria.where("order_id").is(orderId));
+        Update update=new Update();
+        update.set("checked","1");
+        mongoTemplate.updateFirst(query,update,"order");
         return mongoTemplate.findOne(query, Order.class, "order");
-
     }
+
     @Override
     public long howManyAppeal(String openId) {
         Query query = new Query(Criteria.where("state").is("申诉中"));
         return mongoTemplate.count(query, Order.class);
     }
+
 
     @Override
     public Order createNewOrder(Order order) {  //买方求购即为创建订单
@@ -74,7 +78,7 @@ public class OrderServiceImpl implements OrderService {
         LocalTime time = LocalTime.now();
         DateTimeFormatter dateFormatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         DateTimeFormatter timeFormatter2 = DateTimeFormatter.ofPattern("HH时mm分ss秒");
-        String formatTime1 = dateFormatter1.format(date);
+        String formatTime1 = dateFormatter1.format(date);    //date+time字符串
         String formatTime2 = timeFormatter2.format(time);
         System.out.println(order.getOrder_number());
         System.out.println(order.getOrder_price());
@@ -107,7 +111,6 @@ public class OrderServiceImpl implements OrderService {
                         order_states2.indexOf(order.getState()) != order_states2.indexOf(order1.getState()) + 1 &&
                         order_states3.indexOf(order.getState()) != order_states3.indexOf(order1.getState()) + 1 &&
                         order_states4.indexOf(order.getState()) != order_states4.indexOf(order1.getState()) + 1)
-
                 ){
                     if(!Objects.equals(order.getState(), "已完成")){
                         if(Objects.equals(order.getState(), "待预付")){
@@ -164,6 +167,8 @@ public class OrderServiceImpl implements OrderService {
         pageable = PageRequest.of(getOrderByConditions.getPage_num()-1, getOrderByConditions.getPage_size());
         //and or 查询
         Criteria criteria = new Criteria();
+        Update update=new Update();
+        update.set("checked","1");//代表被查询过
         if (getOrderByConditions.getInput_condition()!= null) {
             if(getOrderByConditions.getState() != null){
                 List<String> list= new ArrayList<>();
@@ -174,7 +179,7 @@ public class OrderServiceImpl implements OrderService {
                         new TypeReference<List<User>>(){}
                 );
                 System.out.println(getOrderByConditions.getInput_condition());
-               System.out.println(userList);
+                System.out.println(userList);
                 userList.forEach(user -> list.add(user.getUser_id()));
                 criteria = new Criteria().andOperator(
                         Criteria.where("state").is(getOrderByConditions.getState()),
@@ -208,11 +213,12 @@ public class OrderServiceImpl implements OrderService {
             else{
                 Query query = new Query().with(pageable);
                 return mongoTemplate.find(query, Order.class,"order");
+
             }
         }
         Query query = Query.query(criteria).with(pageable);
-        return mongoTemplate.find(query, Order.class,"order");
 
+        return mongoTemplate.find(query, Order.class,"order");
     }
 
     @Override
