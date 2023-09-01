@@ -84,4 +84,9 @@ public class OrderController {
         return Result.success(orderService.getTipContent(auth));
     }
 
+    @PostMapping("/order/getOrderByGoodsID")
+    public Result getOrderByGoodsID(@RequestBody Order order){
+        return Result.success(orderService.getOrderByGoodsID(order));
+    }
+
 }

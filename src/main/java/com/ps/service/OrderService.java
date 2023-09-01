@@ -16,7 +16,5 @@ public interface OrderService {
     List<Order> getOrderByConditions(GetOrderByConditions getOrderByConditions);
     List<Tip_Content> getTipContent(String auth);
     List<Button_Content> getButtonContent(String auth);
-
-
-
+    List <Order> getOrderByGoodsID(Order order);
 }

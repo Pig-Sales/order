@@ -230,4 +230,13 @@ public class OrderServiceImpl implements OrderService {
         Query query = new Query(Criteria.where("user_auth").is(auth));
         return mongoTemplate.find(query, Button_Content.class, "button_content");
     }
+
+    @Override
+    public List<Order> getOrderByGoodsID(Order order) {
+        List<String> order_status = Arrays.asList("待交易", "已完成");//只有待交易、已完成的订单才会被加入到返回列表
+
+        Query query = new Query(Criteria.where("goods_id").is(order.getGoods_id())
+                .andOperator(Criteria.where("state").in(order_status)));
+        return mongoTemplate.find(query, Order.class,"order");
+    }
 }
