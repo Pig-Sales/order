@@ -85,8 +85,14 @@ public class OrderController {
     }
 
     @PostMapping("/order/getOrderByGoodsID")
-    public Result getOrderByGoodsID(@RequestBody Order order){
+    public Result getOrderByGoodsID(@RequestBody Order order , @RequestHeader String Authorization){
+        Claims claims =JwtUtils.parseJWT(Authorization , signKey);
+        String auth = (String) claims.get("user_auth");
+        if ("seller".equals(auth))
+        {
+            return Result.error("没有查看订单列表权限！");//养殖户不能查询订单列表
+        }
+
         return Result.success(orderService.getOrderByGoodsID(order));
     }
-
 }
